@@ -1,0 +1,75 @@
+{% extends "case_portal/base.html" %}
+
+{% block title %}Submit Target Record{% endblock %}
+
+{% block content %}
+  <h1>Submit Target Record</h1>
+  <p class="intro">Enter the target details and service dates. Existing codes cannot be submitted twice.</p>
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    {{ case_form.non_field_errors }}
+    <section class="section">
+      <div class="section-heading"><h2>Target Details</h2></div>
+      <div class="fields">
+        {% for field in case_form %}
+          <div class="field{% if field.name == 'personal_identifications' or field.name == 'attached_document' %} field-wide{% endif %}">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
+            {{ field.errors }}
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <h2>Phone numbers</h2>
+        <p class="intro">Add one or more phone numbers for this target. Labels are optional; use “Add another number” for additional numbers.</p>
+      </div>
+      {{ phone_formset.management_form }}
+      {{ phone_formset.non_form_errors }}
+      <div id="phone-rows">
+        {% for phone_form in phone_formset %}
+          <div class="phone-row">
+            {% for hidden in phone_form.hidden_fields %}{{ hidden }}{% endfor %}
+            {% for field in phone_form.visible_fields %}
+              <div class="field">
+                {{ field.label_tag }}{{ field }}{{ field.errors }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+      <template id="empty-phone-row">
+        <div class="phone-row">
+          {% for hidden in phone_formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+          {% for field in phone_formset.empty_form.visible_fields %}
+            <div class="field">
+              {{ field.label_tag }}{{ field }}{{ field.errors }}
+            </div>
+          {% endfor %}
+        </div>
+      </template>
+      <button class="button-secondary" id="add-phone" type="button">Add another number</button>
+    </section>
+
+    <p class="help">Identification images are sensitive. Upload only records you are authorized to submit.</p>
+    <div class="actions">
+      <button type="submit">Submit Target Record</button>
+    </div>
+  </form>
+  <script>
+    (() => {
+      const container = document.getElementById("phone-rows");
+      const template = document.getElementById("empty-phone-row");
+      const totalForms = document.getElementById("id_phone_numbers-TOTAL_FORMS");
+      document.getElementById("add-phone").addEventListener("click", () => {
+        const index = Number(totalForms.value);
+        const row = template.innerHTML.replaceAll("__prefix__", index);
+        container.insertAdjacentHTML("beforeend", row);
+        totalForms.value = index + 1;
+      });
+    })();
+  </script>
+{% endblock %}

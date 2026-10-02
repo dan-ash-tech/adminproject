@@ -1,0 +1,33 @@
+{% extends "case_portal/base.html" %}
+
+{% block title %}Report: {{ case.code }}{% endblock %}
+
+{% block content %}
+  <h1>Report</h1>
+  <p class="intro">{{ case.code }} — {{ case.first_name }} {{ case.last_name }}</p>
+  <p><a class="button button-secondary" href="{% url 'private-target-file' case.pk 'attached_document' %}">Download original report</a></p>
+
+  <article class="report-preview">
+    {% for block in blocks %}
+      {% if block.type == "paragraph" %}
+        <p>{{ block.text|linebreaksbr }}</p>
+      {% else %}
+        <div class="table-scroll">
+          <table class="records-table report-table">
+            <tbody>
+              {% for row in block.rows %}
+                <tr>
+                  {% for cell in row %}
+                    <td>{{ cell|linebreaksbr }}</td>
+                  {% endfor %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    {% empty %}
+      <p>This report contains no readable text.</p>
+    {% endfor %}
+  </article>
+{% endblock %}

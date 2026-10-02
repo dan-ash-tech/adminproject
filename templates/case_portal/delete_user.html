@@ -1,0 +1,16 @@
+{% extends "case_portal/base.html" %}
+
+{% block title %}Delete user{% endblock %}
+
+{% block content %}
+  <h1>Delete user</h1>
+  <p class="intro">Are you sure you want to permanently delete the account <strong>{{ managed_user.username }}</strong>? This action cannot be undone.</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="actions">
+      <button class="target-remove-button" type="submit">Confirm delete</button>
+      <a class="button button-secondary" href="{% url 'manage-users' %}">Cancel</a>
+    </div>
+  </form>
+{% endblock %}

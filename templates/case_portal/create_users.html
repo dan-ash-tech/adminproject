@@ -1,0 +1,32 @@
+{% extends "case_portal/base.html" %}
+
+{% block title %}Create users{% endblock %}
+
+{% block content %}
+  <h1>Create user accounts</h1>
+  <p class="intro">Create one user account at a time and choose whether the account can view assigned targets, view all targets without editing, or manage target records.</p>
+
+  {% if messages %}
+    {% for message in messages %}
+      <p class="notice">{{ message }}</p>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    {{ user_form.non_field_errors }}
+    <section class="user-entry">
+      {% for field in user_form %}
+        <div class="field">
+          {{ field.label_tag }}
+          {{ field }}
+          {{ field.errors }}
+          {% if field.help_text %}<span class="help">{{ field.help_text }}</span>{% endif %}
+        </div>
+      {% endfor %}
+    </section>
+    <div class="actions">
+      <button type="submit">Create user</button>
+    </div>
+  </form>
+{% endblock %}

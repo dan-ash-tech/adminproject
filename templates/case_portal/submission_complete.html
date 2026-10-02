@@ -1,0 +1,15 @@
+
+
+
+{% extends "case_portal/base.html" %}
+
+{% block title %}Record submitted{% endblock %}
+
+{% block content %}
+  <h1>Record submitted</h1>
+  <p class="intro">The target record has been saved.</p>
+  <div class="actions">
+    <a class="button" href="{% url 'dashboard' %}">Back to dashboard</a>
+    <a class="button button-secondary" href="{% url 'submit-case' %}">Submit another record</a>
+  </div>
+{% endblock %}

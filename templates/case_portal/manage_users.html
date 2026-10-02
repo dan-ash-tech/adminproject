@@ -1,0 +1,50 @@
+{% extends "case_portal/base.html" %}
+
+{% block title %}Manage users{% endblock %}
+
+{% block content %}
+  <h1>Manage users</h1>
+  <p class="intro">View accounts, manage user details and passwords, and choose read-only or target-editor permissions. Administrator accounts are protected here.</p>
+  <div class="actions">
+    <a class="button" href="{% url 'create-users' %}">Create user</a>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <p class="notice">{{ message }}</p>
+    {% endfor %}
+  {% endif %}
+
+  <div class="table-scroll">
+    <table class="records-table">
+      <thead>
+        <tr>
+          <th scope="col">Username</th>
+          <th scope="col">Status</th>
+          <th scope="col">Account type</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for managed_user in managed_users %}
+          <tr>
+            <td>{{ managed_user.username }}</td>
+            <td>{% if managed_user.is_active %}Active{% else %}Inactive{% endif %}</td>
+            <td>{{ managed_user.account_role }}</td>
+            <td>
+              {% if not managed_user.is_superuser %}
+                <a class="record-edit-link" href="{% url 'edit-user' managed_user.pk %}">Edit</a>
+                <a class="record-edit-link" href="{% url 'reset-user-password' managed_user.pk %}">Reset password</a>
+                <a class="record-edit-link" href="{% url 'delete-user' managed_user.pk %}">Delete</a>
+              {% else %}
+                Protected
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td class="empty-state" colspan="4">No user accounts found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

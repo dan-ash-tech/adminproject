@@ -1,0 +1,144 @@
+{% extends "case_portal/base.html" %}
+
+{% block title %}{{ dashboard_title }}{% endblock %}
+
+{% block content %}
+  <h1>{{ dashboard_title }}</h1>
+  <p class="intro">{{ dashboard_message|linebreaksbr }}</p>
+
+  {% if messages %}
+    {% for message in messages %}
+      <p class="notice">{{ message }}</p>
+    {% endfor %}
+  {% endif %}
+
+  {% if show_target_totals %}
+    <section class="target-totals" aria-label="Target totals">
+      <article class="target-total">
+        <h2>Current monitored targets</h2>
+        <p>{{ current_target_count }}</p>
+      </article>
+      <article class="target-total">
+        <h2>Stopped targets</h2>
+        <p>{{ stopped_target_count }}</p>
+      </article>
+    </section>
+  {% endif %}
+
+  <nav class="status-tabs" aria-label="Monitoring status">
+    <a class="status-tab{% if status == 'current' %} is-active{% endif %}"
+       href="{% url 'dashboard' %}?status=current"{% if status == 'current' %} aria-current="page"{% endif %}>
+      Current Monitored
+    </a>
+    <a class="status-tab{% if status == 'stopped' %} is-active{% endif %}"
+       href="{% url 'dashboard' %}?status=stopped"{% if status == 'stopped' %} aria-current="page"{% endif %}>
+      Stopped From The System
+    </a>
+  </nav>
+
+  <form class="dashboard-search" method="get" action="{% url 'dashboard' %}">
+    <input type="hidden" name="status" value="{{ status }}">
+    <label for="dashboard-search">Search Targets</label>
+    <div class="search-controls">
+      <input id="dashboard-search" type="search" name="q" value="{{ search_query }}" placeholder="Search any target field, including S/N, call-sign, assignee, dates, or files">
+      <button type="submit">Search</button>
+      {% if search_query %}
+        <a class="button button-secondary" href="{% url 'dashboard' %}?status={{ status }}">Clear</a>
+      {% endif %}
+    </div>
+  </form>
+
+  <div class="table-scroll">
+    <table class="records-table">
+      <thead>
+        <tr>
+          <th scope="col">S/N</th>
+          <th scope="col">Call-sign</th>
+          <th scope="col">First name</th>
+          <th scope="col">Last name</th>
+          <th scope="col">Phone numbers</th>
+          <th scope="col">Authorizer</th>
+          <th scope="col">Case type</th>
+          <th scope="col">User</th>
+          <th scope="col">Status</th>
+          <th scope="col">Start date</th>
+          <th scope="col">First termination</th>
+          <th scope="col">Reprovisioned</th>
+          <th scope="col">Second termination</th>
+          <th scope="col">Image</th>
+          <th scope="col">Report</th>
+          {% if can_edit_targets or can_delete_targets %}
+            <th scope="col">Actions</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for case in cases %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ case.code }}</td>
+            <td>{{ case.first_name }}</td>
+            <td>{{ case.last_name }}</td>
+            <td>
+              {% for target in case.phone_numbers.all %}
+                <div class="target-item">
+                  <span>{% if target.label %}{{ target.label }}: {% endif %}{{ target.number }}</span>
+                  {% if user.is_staff and perms.Adminbackup.delete_casephonenumber %}
+                    <form class="target-remove-form" method="post" action="{% url 'delete-case-phone-number' case.pk target.pk %}" onsubmit="return confirm('Remove this phone number?');">
+                      {% csrf_token %}
+                      <input type="hidden" name="status" value="{{ status }}">
+                      <input type="hidden" name="q" value="{{ search_query }}">
+                      <button class="target-remove-button" type="submit" aria-label="Remove phone number {{ target.number }}" title="Remove this phone number">Remove</button>
+                    </form>
+                  {% endif %}
+                </div>
+              {% empty %}
+                -
+              {% endfor %}
+            </td>
+            <td>{{ case.authorizer }}</td>
+            <td class="case-type">{{ case.case_type }}</td>
+            <td>{{ case.assigned_user|default:"-" }}</td>
+            <td>{{ case.monitoring_status }}</td>
+            <td>{{ case.start_date|date:"Y-m-d" }}</td>
+            <td>{{ case.first_termination_date|date:"Y-m-d"|default:"-" }}</td>
+            <td>{{ case.reprovisioned_date|date:"Y-m-d"|default:"-" }}</td>
+            <td>{{ case.second_termination_date|date:"Y-m-d"|default:"-" }}</td>
+            <td>
+              {% if case.personal_identifications %}
+                <a href="{% url 'private-target-file' case.pk 'personal_identifications' %}">View image</a>
+              {% else %}-{% endif %}
+            </td>
+            <td>
+              {% if case.attached_document %}
+                {% if case.attached_document.name|lower|slice:"-5:" == ".docx" %}
+                  <a href="{% url 'private-target-report' case.pk %}">Read report</a>
+                {% endif %}
+                <a href="{% url 'private-target-file' case.pk 'attached_document' %}">Download</a>
+              {% else %}-{% endif %}
+            </td>
+            {% if can_edit_targets or can_delete_targets %}
+              <td>
+                {% if can_edit_targets %}
+                  <a class="record-edit-link" href="{% url 'admin:Adminbackup_caserecord_change' case.pk %}">Edit</a>
+                {% endif %}
+                {% if can_delete_targets %}
+                  <form method="post" action="{% url 'delete-target' case.pk %}" onsubmit="return confirm('Delete this target? This cannot be undone.');">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="{{ status }}">
+                    <input type="hidden" name="q" value="{{ search_query }}">
+                    <button class="target-remove-button" type="submit">Delete target</button>
+                  </form>
+                {% endif %}
+              </td>
+            {% endif %}
+          </tr>
+        {% empty %}
+          <tr>
+            <td class="empty-state" colspan="{% if can_edit_targets or can_delete_targets %}16{% else %}15{% endif %}">{% if search_query %}No targets match your search.{% else %}No targets are assigned to your account in this status.{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}
